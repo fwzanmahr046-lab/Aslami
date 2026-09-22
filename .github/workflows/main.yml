@@ -28,6 +28,9 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Generate Android platform folders
+        run: flutter create . --platforms=android --project-name=islamic_app --org=com.nooralislam
+
       - name: Install dependencies
         run: flutter pub get
 
