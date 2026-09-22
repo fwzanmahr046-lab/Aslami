@@ -1,6 +1,6 @@
 // ============================================================================
-// تطبيق إسلامي شامل - Islamic App
-// مواقيت الصلاة + الأذكار + القبلة - بدون أخطاء، جاهز للإنتاج
+// تطبيق نور الإسلام - Islamic App
+// مواقيت الصلاة + الأذكار + القبلة - Production Ready
 // ============================================================================
 
 import 'dart:async';
@@ -13,7 +13,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ============================================================================
-// أ. نماذج البيانات (DATA MODELS)
+// أ. نماذج البيانات
 // ============================================================================
 
 class City {
@@ -73,7 +73,7 @@ class PrayerTimes {
 }
 
 // ============================================================================
-// ب. خدمات الحساب (SERVICES LAYER)
+// ب. خدمات الحساب
 // ============================================================================
 
 class PrayerCalculator {
@@ -82,8 +82,8 @@ class PrayerCalculator {
   static double _sin(double d) => math.sin(_dtr(d));
   static double _cos(double d) => math.cos(_dtr(d));
   static double _tan(double d) => math.tan(_dtr(d));
-  static double _asin(double x) => _rtd(math.asin(x));
-  static double _acos(double x) => _rtd(math.acos(x));
+  static double _asin(double x) => _rtd(math.asin(x.clamp(-1.0, 1.0)));
+  static double _acos(double x) => _rtd(math.acos(x.clamp(-1.0, 1.0)));
   static double _atan(double x) => _rtd(math.atan(x));
   static double _atan2(double y, double x) => _rtd(math.atan2(y, x));
 
@@ -154,7 +154,9 @@ class PrayerCalculator {
     final totalMinutes = (hours * 60).round();
     final h = (totalMinutes ~/ 60) % 24;
     final m = totalMinutes % 60;
-    return DateTime(date.year, date.month, date.day, h, m);
+    final hh = h < 0 ? h + 24 : h;
+    final mm = m < 0 ? m + 60 : m;
+    return DateTime(date.year, date.month, date.day, hh, mm);
   }
 
   static PrayerTimes calculate({
@@ -176,8 +178,7 @@ class PrayerCalculator {
       asr = _asrTime(jd, lat, 1.0, t);
       maghrib = _sunAngleTime(jd, lat, 0.833, t);
       isha = _sunAngleTime(jd, lat, ishaAngle, t);
-      final avg =
-          (fajr + sunrise + dhuhr + asr + maghrib + isha) / 6.0;
+      final avg = (fajr + sunrise + dhuhr + asr + maghrib + isha) / 6.0;
       t = (avg - 12.0) / 24.0;
     }
 
@@ -221,18 +222,8 @@ class QiblaCalculator {
 
 class HijriDate {
   static const List<String> months = [
-    'محرم',
-    'صفر',
-    'ربيع الأول',
-    'ربيع الآخر',
-    'جمادى الأولى',
-    'جمادى الآخرة',
-    'رجب',
-    'شعبان',
-    'رمضان',
-    'شوال',
-    'ذو القعدة',
-    'ذو الحجة',
+    'محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة',
+    'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة',
   ];
 
   static List<int> fromGregorian(DateTime date) {
@@ -773,10 +764,7 @@ const List<AdhkarCategory> kAdhkarCategories = [
         virtue: 'من قالها ثلاثاً لم يضره شيء تلك الليلة',
         count: 3,
       ),
-      Dhikr(
-        'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ.',
-        count: 100,
-      ),
+      Dhikr('سُبْحَانَ اللَّهِ وَبِحَمْدِهِ.', count: 100),
       Dhikr(
         'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ.',
         count: 10,
@@ -784,10 +772,7 @@ const List<AdhkarCategory> kAdhkarCategories = [
       Dhikr(
         'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَالْعَجْزِ وَالْكَسَلِ، وَالْبُخْلِ وَالْجُبْنِ، وَضَلَعِ الدَّيْنِ وَقَهْرِ الرِّجَالِ.',
       ),
-      Dhikr(
-        'أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ.',
-        count: 100,
-      ),
+      Dhikr('أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ.', count: 100),
       Dhikr(
         'اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ.',
         count: 10,
@@ -905,18 +890,14 @@ const List<AdhkarCategory> kAdhkarCategories = [
     color: Color(0xFFD35400),
     items: [
       Dhikr('بِسْمِ اللَّهِ. (قبل الطعام)'),
-      Dhikr(
-        'بِسْمِ اللَّهِ أَوَّلَهُ وَآخِرَهُ. (إذا نسي في أوله)',
-      ),
+      Dhikr('بِسْمِ اللَّهِ أَوَّلَهُ وَآخِرَهُ. (إذا نسي في أوله)'),
       Dhikr(
         'الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنِي هَذَا وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ. (بعد الطعام)',
       ),
       Dhikr(
         'الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَ وَسَقَى، وَسَوَّغَهُ وَجَعَلَ لَهُ مَخْرَجًا.',
       ),
-      Dhikr(
-        'اللَّهُمَّ بَارِكْ لَنَا فِيهِ، وَأَطْعِمْنَا خَيْرًا مِنْهُ.',
-      ),
+      Dhikr('اللَّهُمَّ بَارِكْ لَنَا فِيهِ، وَأَطْعِمْنَا خَيْرًا مِنْهُ.'),
     ],
   ),
   AdhkarCategory(
@@ -934,14 +915,8 @@ const List<AdhkarCategory> kAdhkarCategories = [
         'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ.',
         virtue: 'كلمتان خفيفتان على اللسان، ثقيلتان في الميزان',
       ),
-      Dhikr(
-        'لَا إِلَهَ إِلَّا اللَّهُ.',
-        virtue: 'أفضل الذكر',
-      ),
-      Dhikr(
-        'الْحَمْدُ لِلَّهِ.',
-        virtue: 'تملأ الميزان',
-      ),
+      Dhikr('لَا إِلَهَ إِلَّا اللَّهُ.', virtue: 'أفضل الذكر'),
+      Dhikr('الْحَمْدُ لِلَّهِ.', virtue: 'تملأ الميزان'),
       Dhikr(
         'سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلَا إِلَهَ إِلَّا اللَّهُ، وَاللَّهُ أَكْبَرُ.',
         virtue: 'الباقيات الصالحات',
@@ -950,20 +925,13 @@ const List<AdhkarCategory> kAdhkarCategories = [
         'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ.',
         count: 10,
       ),
-      Dhikr(
-        'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ.',
-        count: 100,
-      ),
-      Dhikr(
-        'أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ وَأَتُوبُ إِلَيْهِ.',
-      ),
+      Dhikr('سُبْحَانَ اللَّهِ وَبِحَمْدِهِ.', count: 100),
+      Dhikr('أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ وَأَتُوبُ إِلَيْهِ.'),
       Dhikr(
         'اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ.',
         count: 10,
       ),
-      Dhikr(
-        'يَا مُقَلِّبَ الْقُلُوبِ ثَبِّتْ قَلْبِي عَلَى دِينِكَ.',
-      ),
+      Dhikr('يَا مُقَلِّبَ الْقُلُوبِ ثَبِّتْ قَلْبِي عَلَى دِينِكَ.'),
       Dhikr(
         'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْهُدَى وَالتُّقَى وَالْعَفَافَ وَالْغِنَى.',
       ),
@@ -975,7 +943,7 @@ const List<AdhkarCategory> kAdhkarCategories = [
 ];
 
 // ============================================================================
-// هـ. محرك إدارة الحالة الموحد (AppRepository)
+// هـ. محرك إدارة الحالة
 // ============================================================================
 
 class AppRepository extends ChangeNotifier {
@@ -1150,7 +1118,7 @@ class AppRepository extends ChangeNotifier {
 }
 
 // ============================================================================
-// و. نظام التصميم (Design System)
+// و. نظام التصميم
 // ============================================================================
 
 class AppColors {
@@ -1181,7 +1149,6 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.cream,
-      fontFamily: 'Roboto',
       appBarTheme: const AppBarTheme(
         elevation: 0,
         centerTitle: true,
@@ -1205,10 +1172,7 @@ class AppTheme {
           fontWeight: FontWeight.w700,
           color: AppColors.textDark,
         ),
-        bodyMedium: TextStyle(
-          color: AppColors.textDark,
-          height: 1.6,
-        ),
+        bodyMedium: TextStyle(color: AppColors.textDark, height: 1.6),
       ),
     );
   }
@@ -1250,17 +1214,14 @@ class AppTheme {
           fontWeight: FontWeight.w700,
           color: Colors.white,
         ),
-        bodyMedium: TextStyle(
-          color: Colors.white,
-          height: 1.6,
-        ),
+        bodyMedium: TextStyle(color: Colors.white, height: 1.6),
       ),
     );
   }
 }
 
 // ============================================================================
-// ز. تطبيق الجذر (Root App)
+// ز. تطبيق الجذر
 // ============================================================================
 
 class AppScope extends InheritedNotifier<AppRepository> {
@@ -1342,7 +1303,7 @@ class _IslamicAppState extends State<IslamicApp> {
 }
 
 // ============================================================================
-// ح. الشاشة الجذرية مع التنقل السفلي
+// ح. الشاشة الجذرية
 // ============================================================================
 
 class RootScreen extends StatefulWidget {
@@ -1372,7 +1333,7 @@ class _RootScreenState extends State<RootScreen> {
           color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),
@@ -1386,8 +1347,7 @@ class _RootScreenState extends State<RootScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             height: 68,
-            labelBehavior:
-                NavigationDestinationLabelBehavior.alwaysShow,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
             destinations: const [
               NavigationDestination(
                 icon: Icon(Icons.access_time_rounded),
@@ -1418,7 +1378,7 @@ class _RootScreenState extends State<RootScreen> {
 }
 
 // ============================================================================
-// ط. الشاشة الرئيسية (مواقيت الصلاة)
+// ط. الشاشة الرئيسية
 // ============================================================================
 
 class HomeScreen extends StatefulWidget {
@@ -1522,7 +1482,7 @@ class _HomeScreenState extends State<HomeScreen>
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.35),
+            color: AppColors.primary.withValues(alpha: 0.35),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -1536,7 +1496,7 @@ class _HomeScreenState extends State<HomeScreen>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
@@ -1564,7 +1524,7 @@ class _HomeScreenState extends State<HomeScreen>
                     Text(
                       '${repo.country.flag}  ${repo.country.name}',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1580,10 +1540,10 @@ class _HomeScreenState extends State<HomeScreen>
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.2),
+                  color: AppColors.accent.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(
-                    color: AppColors.accent.withOpacity(0.4),
+                    color: AppColors.accent.withValues(alpha: 0.4),
                   ),
                 ),
                 child: const Text(
@@ -1613,7 +1573,7 @@ class _HomeScreenState extends State<HomeScreen>
           Text(
             _gregorianString(DateTime.now()),
             style: TextStyle(
-              color: Colors.white.withOpacity(0.75),
+              color: Colors.white.withValues(alpha: 0.75),
               fontSize: 13,
             ),
           ),
@@ -1624,27 +1584,11 @@ class _HomeScreenState extends State<HomeScreen>
 
   String _gregorianString(DateTime d) {
     const months = [
-      'يناير',
-      'فبراير',
-      'مارس',
-      'أبريل',
-      'مايو',
-      'يونيو',
-      'يوليو',
-      'أغسطس',
-      'سبتمبر',
-      'أكتوبر',
-      'نوفمبر',
-      'ديسمبر',
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
     ];
     const days = [
-      'الإثنين',
-      'الثلاثاء',
-      'الأربعاء',
-      'الخميس',
-      'الجمعة',
-      'السبت',
-      'الأحد',
+      'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد',
     ];
     return '${days[d.weekday - 1]}، ${d.day} ${months[d.month - 1]} ${d.year}';
   }
@@ -1663,12 +1607,12 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.accent.withOpacity(0.3),
+          color: AppColors.accent.withValues(alpha: 0.3),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -1684,8 +1628,8 @@ class _HomeScreenState extends State<HomeScreen>
                   return Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withOpacity(
-                        0.15 + (_pulse.value * 0.15),
+                      color: AppColors.accent.withValues(
+                        alpha: 0.15 + (_pulse.value * 0.15),
                       ),
                       shape: BoxShape.circle,
                     ),
@@ -1705,9 +1649,7 @@ class _HomeScreenState extends State<HomeScreen>
                     Text(
                       'الصلاة القادمة',
                       style: TextStyle(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white70
-                            : AppColors.textMuted,
+                        color: isDark ? Colors.white70 : AppColors.textMuted,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1742,7 +1684,9 @@ class _HomeScreenState extends State<HomeScreen>
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(isDark ? 0.25 : 0.08),
+              color: AppColors.primary.withValues(
+                alpha: isDark ? 0.25 : 0.08,
+              ),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
@@ -1799,11 +1743,11 @@ class _HomeScreenState extends State<HomeScreen>
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.accent.withOpacity(0.15),
+          color: AppColors.accent.withValues(alpha: 0.15),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -1924,11 +1868,11 @@ class _PrayerRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: isNext
-            ? accent.withOpacity(isDark ? 0.15 : 0.08)
+            ? accent.withValues(alpha: isDark ? 0.15 : 0.08)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         border: isNext
-            ? Border.all(color: accent.withOpacity(0.4), width: 1)
+            ? Border.all(color: accent.withValues(alpha: 0.4), width: 1)
             : null,
       ),
       child: Row(
@@ -1937,7 +1881,7 @@ class _PrayerRow extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.12),
+              color: accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(_icon(), color: accent, size: 20),
@@ -1960,7 +1904,7 @@ class _PrayerRow extends StatelessWidget {
                 vertical: 3,
               ),
               decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.15),
+                color: AppColors.accent.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Text(
@@ -2009,7 +1953,7 @@ class _ActionChip extends StatelessWidget {
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: AppColors.accent.withOpacity(0.15),
+          color: AppColors.accent.withValues(alpha: 0.15),
         ),
       ),
       child: Column(
@@ -2033,7 +1977,7 @@ class _ActionChip extends StatelessWidget {
 }
 
 // ============================================================================
-// ي. شاشة الأذكار (قائمة الفئات)
+// ي. شاشة الأذكار
 // ============================================================================
 
 class AdhkarListScreen extends StatelessWidget {
@@ -2090,7 +2034,7 @@ class AdhkarListScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(isDark ? 0.15 : 0.3),
+            color: AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -2101,7 +2045,7 @@ class AdhkarListScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.2),
+              color: AppColors.accent.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
@@ -2115,10 +2059,10 @@ class AdhkarListScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'الأذكار والأدعية',
                   style: TextStyle(
-                    color: isDark ? Colors.white : Colors.white,
+                    color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
                   ),
@@ -2128,8 +2072,7 @@ class AdhkarListScreen extends StatelessWidget {
                 Text(
                   '${kAdhkarCategories.length} أقسام • أذكار مأثورة',
                   style: TextStyle(
-                    color: (isDark ? Colors.white : Colors.white)
-                        .withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -2169,13 +2112,15 @@ class _CategoryCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                category.color.withOpacity(isDark ? 0.35 : 0.12),
-                category.color.withOpacity(isDark ? 0.15 : 0.04),
+                category.color.withValues(alpha: isDark ? 0.35 : 0.12),
+                category.color.withValues(alpha: isDark ? 0.15 : 0.04),
               ],
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: category.color.withOpacity(isDark ? 0.5 : 0.25),
+              color: category.color.withValues(
+                alpha: isDark ? 0.5 : 0.25,
+              ),
               width: 1.2,
             ),
           ),
@@ -2187,7 +2132,7 @@ class _CategoryCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: category.color.withOpacity(0.2),
+                    color: category.color.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -2211,9 +2156,7 @@ class _CategoryCard extends StatelessWidget {
                 Text(
                   category.subtitle,
                   style: TextStyle(
-                    color: isDark
-                        ? Colors.white70
-                        : AppColors.textMuted,
+                    color: isDark ? Colors.white70 : AppColors.textMuted,
                     fontSize: 11,
                     height: 1.3,
                   ),
@@ -2249,7 +2192,7 @@ class _CategoryCard extends StatelessWidget {
 }
 
 // ============================================================================
-// ك. شاشة تفاصيل الأذكار مع العدّاد
+// ك. شاشة تفاصيل الأذكار
 // ============================================================================
 
 class AdhkarDetailScreen extends StatefulWidget {
@@ -2348,10 +2291,10 @@ class _AdhkarDetailScreenState extends State<AdhkarDetailScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: widget.category.color.withOpacity(isDark ? 0.15 : 0.08),
+        color: widget.category.color.withValues(alpha: isDark ? 0.15 : 0.08),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: widget.category.color.withOpacity(0.25),
+          color: widget.category.color.withValues(alpha: 0.25),
         ),
       ),
       child: Row(
@@ -2408,13 +2351,13 @@ class _DhikrCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: done
-              ? color.withOpacity(0.6)
-              : AppColors.accent.withOpacity(0.15),
+              ? color.withValues(alpha: 0.6)
+              : AppColors.accent.withValues(alpha: 0.15),
           width: done ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -2437,7 +2380,7 @@ class _DhikrCard extends StatelessWidget {
                       height: 30,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.15),
+                        color: color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -2457,7 +2400,7 @@ class _DhikrCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: color.withOpacity(done ? 0.1 : 0.18),
+                          color: color.withValues(alpha: done ? 0.1 : 0.18),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -2472,9 +2415,7 @@ class _DhikrCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              done
-                                  ? 'تمّ'
-                                  : 'التكرار: $remaining / $total',
+                              done ? 'تمّ' : 'التكرار: $remaining / $total',
                               style: TextStyle(
                                 color: color,
                                 fontSize: 11,
@@ -2511,10 +2452,10 @@ class _DhikrCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withOpacity(0.1),
+                      color: AppColors.accent.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppColors.accent.withOpacity(0.25),
+                        color: AppColors.accent.withValues(alpha: 0.25),
                       ),
                     ),
                     child: Row(
@@ -2605,19 +2546,16 @@ class QiblaScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: isDark
-                              ? [
-                                  AppColors.cardDark,
-                                  AppColors.surfaceDark,
-                                ]
+                              ? [AppColors.cardDark, AppColors.surfaceDark]
                               : [Colors.white, AppColors.cream],
                         ),
                         border: Border.all(
-                          color: AppColors.accent.withOpacity(0.3),
+                          color: AppColors.accent.withValues(alpha: 0.3),
                           width: 2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.15),
+                            color: AppColors.primary.withValues(alpha: 0.15),
                             blurRadius: 30,
                             spreadRadius: 4,
                           ),
@@ -2638,7 +2576,9 @@ class QiblaScreen extends StatelessWidget {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.accent.withOpacity(0.5),
+                                  color: AppColors.accent.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   blurRadius: 16,
                                 ),
                               ],
@@ -2658,7 +2598,7 @@ class QiblaScreen extends StatelessWidget {
                                 end: Alignment.bottomCenter,
                                 colors: [
                                   AppColors.accent,
-                                  AppColors.accent.withOpacity(0.1),
+                                  AppColors.accent.withValues(alpha: 0.1),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(2),
@@ -2675,7 +2615,7 @@ class QiblaScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.4),
+                            color: AppColors.primary.withValues(alpha: 0.4),
                             blurRadius: 16,
                           ),
                         ],
@@ -2697,7 +2637,7 @@ class QiblaScreen extends StatelessWidget {
                 color: Theme.of(context).cardTheme.color,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.accent.withOpacity(0.2),
+                  color: AppColors.accent.withValues(alpha: 0.2),
                 ),
               ),
               child: Column(
@@ -2736,7 +2676,7 @@ class QiblaScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withOpacity(0.08),
+                      color: AppColors.accent.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Row(
@@ -2787,7 +2727,7 @@ class QiblaScreen extends StatelessWidget {
               height: isMajor ? 14 : 8,
               color: isMajor
                   ? AppColors.accent
-                  : AppColors.accent.withOpacity(0.35),
+                  : AppColors.accent.withValues(alpha: 0.35),
             ),
           ),
         ),
@@ -2924,7 +2864,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.accent.withOpacity(0.12),
+          color: AppColors.accent.withValues(alpha: 0.12),
         ),
       ),
       child: Material(
@@ -2939,7 +2879,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withOpacity(0.15),
+                    color: AppColors.accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: AppColors.accent, size: 20),
@@ -2995,7 +2935,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.accent.withOpacity(0.12),
+          color: AppColors.accent.withValues(alpha: 0.12),
         ),
       ),
       child: Column(
@@ -3005,7 +2945,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(9),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.15),
+                  color: AppColors.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -3029,7 +2969,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.08),
+              color: AppColors.accent.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -3117,7 +3057,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.accent.withOpacity(0.12),
+          color: AppColors.accent.withValues(alpha: 0.12),
         ),
       ),
       child: Column(
@@ -3128,7 +3068,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.15),
+                  color: AppColors.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -3281,7 +3221,7 @@ class _PickerSheetState extends State<_PickerSheet> {
             width: 44,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.5),
+              color: AppColors.accent.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -3323,7 +3263,7 @@ class _PickerSheetState extends State<_PickerSheet> {
                 filled: true,
                 fillColor: isDark
                     ? AppColors.cardDark
-                    : Colors.white.withOpacity(0.8),
+                    : Colors.white.withValues(alpha: 0.8),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
@@ -3365,9 +3305,7 @@ class _PickerSheetState extends State<_PickerSheet> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Material(
-                          color: isDark
-                              ? AppColors.cardDark
-                              : Colors.white,
+                          color: isDark ? AppColors.cardDark : Colors.white,
                           borderRadius: BorderRadius.circular(14),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(14),
