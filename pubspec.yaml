@@ -1,11 +1,10 @@
 name: islamic_app
-description: تطبيق إسلامي شامل لمواقيت الصلاة والأذكار والقبلة بدقة عالية
+description: A beautiful Islamic application with prayer times and adhkar
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
-  flutter: ">=3.10.0"
 
 dependencies:
   flutter:
